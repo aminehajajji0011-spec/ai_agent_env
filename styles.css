@@ -100,6 +100,17 @@ button:hover {
   box-shadow: 0 8px 18px rgba(90, 63, 245, 0.25);
 }
 
+.button-secondary {
+  background: var(--card);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.button-secondary:hover {
+  box-shadow: 0 6px 14px rgba(90, 63, 245, 0.12);
+}
+
 .status {
   font-size: 0.95rem;
   color: var(--muted);

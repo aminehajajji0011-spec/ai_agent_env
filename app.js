@@ -6,6 +6,8 @@ const locationEl = document.getElementById("location");
 const dateEl = document.getElementById("date");
 const timezoneEl = document.getElementById("timezone");
 const methodLabelEl = document.getElementById("method-label");
+const updatedAtEl = document.getElementById("updated-at");
+const geoButton = document.getElementById("geo-button");
 
 const METHOD_LABELS = {
   2: "ISNA",
@@ -45,7 +47,7 @@ const renderTimes = (timings) => {
   });
 };
 
-const fetchPrayerTimes = async ({ city, country, method }) => {
+const fetchPrayerTimesByCity = async ({ city, country, method }) => {
   const url = new URL("https://api.aladhan.com/v1/timingsByCity");
   url.searchParams.set("city", city);
   url.searchParams.set("country", country);
@@ -62,6 +64,40 @@ const fetchPrayerTimes = async ({ city, country, method }) => {
   return payload.data;
 };
 
+const fetchPrayerTimesByCoords = async ({ latitude, longitude, method }) => {
+  const url = new URL("https://api.aladhan.com/v1/timings");
+  url.searchParams.set("latitude", latitude);
+  url.searchParams.set("longitude", longitude);
+  url.searchParams.set("method", method);
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    throw new Error("Impossible de récupérer les horaires.");
+  }
+  const payload = await response.json();
+  if (payload.code !== 200 || !payload.data) {
+    throw new Error(payload.data ?? "Réponse inattendue de l'API.");
+  }
+  return payload.data;
+};
+
+const renderResponse = ({ data, locationLabel, method }) => {
+  const { timings, date, meta } = data;
+
+  locationEl.textContent = locationLabel;
+  dateEl.textContent = `${date.readable} • ${date.hijri.date}`;
+  timezoneEl.textContent = meta.timezone;
+  methodLabelEl.textContent = `Méthode: ${METHOD_LABELS[method] ?? method}`;
+  updatedAtEl.textContent = `Actualisé: ${new Date().toLocaleTimeString(
+    "fr-FR",
+    { hour: "2-digit", minute: "2-digit" },
+  )}`;
+  renderTimes(timings);
+
+  resultsEl.hidden = false;
+  updateStatus("Horaires à jour.");
+};
+
 const handleSubmit = async (event) => {
   event.preventDefault();
   const formData = new FormData(form);
@@ -73,22 +109,55 @@ const handleSubmit = async (event) => {
   resultsEl.hidden = true;
 
   try {
-    const data = await fetchPrayerTimes({ city, country, method });
-    const { timings, date, meta } = data;
-
-    locationEl.textContent = `${city}, ${country}`;
-    dateEl.textContent = `${date.readable} • ${date.hijri.date}`;
-    timezoneEl.textContent = meta.timezone;
-    methodLabelEl.textContent = `Méthode: ${METHOD_LABELS[method] ?? method}`;
-    renderTimes(timings);
-
-    resultsEl.hidden = false;
-    updateStatus("Horaires à jour.");
+    const data = await fetchPrayerTimesByCity({ city, country, method });
+    renderResponse({
+      data,
+      locationLabel: `${city}, ${country}`,
+      method,
+    });
   } catch (error) {
     updateStatus(error.message || "Une erreur est survenue.", true);
   }
 };
 
+const handleGeolocation = () => {
+  if (!navigator.geolocation) {
+    updateStatus("La géolocalisation n'est pas disponible.", true);
+    return;
+  }
+
+  const method = new FormData(form).get("method");
+  updateStatus("Localisation en cours…");
+  resultsEl.hidden = true;
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      try {
+        const { latitude, longitude } = position.coords;
+        const data = await fetchPrayerTimesByCoords({
+          latitude,
+          longitude,
+          method,
+        });
+        renderResponse({
+          data,
+          locationLabel: `Position actuelle (${latitude.toFixed(
+            2,
+          )}, ${longitude.toFixed(2)})`,
+          method,
+        });
+      } catch (error) {
+        updateStatus(error.message || "Une erreur est survenue.", true);
+      }
+    },
+    () => {
+      updateStatus("Impossible d'obtenir votre position.", true);
+    },
+    { timeout: 10000 },
+  );
+};
+
 form.addEventListener("submit", handleSubmit);
+geoButton.addEventListener("click", handleGeolocation);
 
 handleSubmit(new Event("submit"));
