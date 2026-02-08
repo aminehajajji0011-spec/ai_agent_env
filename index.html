@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Horaire de prière</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app__header">
+        <p class="app__badge">À jour en temps réel</p>
+        <h1>Horaire de prière</h1>
+        <p class="app__subtitle">
+          Consultez les heures de prière actualisées via l'API publique Aladhan.
+        </p>
+      </header>
+
+      <section class="app__panel">
+        <form id="prayer-form" class="form">
+          <div class="form__field">
+            <label for="city">Ville</label>
+            <input id="city" name="city" type="text" value="Paris" required />
+          </div>
+          <div class="form__field">
+            <label for="country">Pays</label>
+            <input id="country" name="country" type="text" value="France" required />
+          </div>
+          <div class="form__field">
+            <label for="method">Méthode de calcul</label>
+            <select id="method" name="method">
+              <option value="2">ISNA</option>
+              <option value="3">MWL</option>
+              <option value="5">Egyptian</option>
+              <option value="12">Muslim World League (Karachi)</option>
+              <option value="15">Moonsighting Committee</option>
+            </select>
+          </div>
+          <button type="submit">Mettre à jour</button>
+        </form>
+
+        <div class="status" id="status">Chargement des horaires…</div>
+
+        <div class="card" id="results" hidden>
+          <div class="card__header">
+            <div>
+              <h2 id="location">Paris, France</h2>
+              <p id="date">—</p>
+            </div>
+            <div class="card__meta">
+              <span id="timezone">—</span>
+              <span id="method-label">—</span>
+            </div>
+          </div>
+          <ul class="times" id="times"></ul>
+        </div>
+      </section>
+
+      <footer class="app__footer">
+        <p>
+          Source :
+          <a href="https://aladhan.com/prayer-times-api" target="_blank" rel="noreferrer">
+            Aladhan Prayer Times API
+          </a>
+        </p>
+      </footer>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
